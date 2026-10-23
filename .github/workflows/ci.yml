@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "true"
+      SQL_PORT: "14333"
+      # Disposable CI database only. No development or production credentials.
+      MSSQL_SA_PASSWORD: "CiOnly_StrongPassword123!"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Select .NET 8 SDK
+        run: dotnet new globaljson --sdk-version 8.0.100 --roll-forward latestFeature
+
+      - name: Restore
+        run: dotnet restore CounterpartyRegistry.sln
+
+      - name: Build
+        run: dotnet build CounterpartyRegistry.sln --configuration Release --no-restore
+
+      - name: Unit tests
+        run: >-
+          dotnet test tests/CounterpartyRegistry.UnitTests
+          --configuration Release --no-build
+          --logger "trx;LogFileName=unit.trx"
+          --results-directory TestResults/unit
+
+      - name: Start SQL Server
+        run: docker compose up -d --wait --wait-timeout 180 sqlserver
+
+      - name: Integration tests
+        env:
+          ConnectionStrings__DefaultConnection: "Server=tcp:127.0.0.1,14333;Database=CounterpartyRegistry;User Id=sa;Password=CiOnly_StrongPassword123!;Encrypt=True;TrustServerCertificate=True"
+        run: >-
+          dotnet test tests/CounterpartyRegistry.IntegrationTests
+          --configuration Release --no-build
+          --logger "trx;LogFileName=integration.trx"
+          --results-directory TestResults/integration
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: SQL Server logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail 100 sqlserver
+
+      - name: Stop SQL Server
+        if: always()
+        run: docker compose down --volumes

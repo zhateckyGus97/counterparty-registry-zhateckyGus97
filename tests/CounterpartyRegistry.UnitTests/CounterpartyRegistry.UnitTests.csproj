@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\CounterpartyRegistry.Domain\CounterpartyRegistry.Domain.csproj" />
+    <ProjectReference Include="..\..\src\CounterpartyRegistry.Application\CounterpartyRegistry.Application.csproj" />
   </ItemGroup>
 
 </Project>

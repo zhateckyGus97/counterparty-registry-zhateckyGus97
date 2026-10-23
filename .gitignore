@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Local test reports
+TestResults/
+
 # User-specific files
 *.rsuser
 *.suo
@@ -480,3 +483,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Local database credentials
+.env

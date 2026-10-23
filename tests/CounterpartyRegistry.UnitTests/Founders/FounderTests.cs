@@ -1,4 +1,5 @@
 using CounterpartyRegistry.Domain.Clients;
+using CounterpartyRegistry.Domain.Exceptions;
 using CounterpartyRegistry.Domain.Founders;
 
 namespace CounterpartyRegistry.UnitTests.Founders;
@@ -17,7 +18,8 @@ public class FounderTests
     [InlineData("12345678904A")]
     public void Create_WithInvalidInn_Throws(string? inn)
     {
-        Assert.ThrowsAny<ArgumentException>(() => Founder.Create(inn!, "Иванов Иван", Start));
+        var exception = Assert.Throws<DomainValidationException>(() => Founder.Create(inn!, "Иванов Иван", Start));
+        Assert.Equal(nameof(Founder.Inn), exception.FieldName);
     }
 
     [Theory]
@@ -26,7 +28,8 @@ public class FounderTests
     [InlineData("   ")]
     public void Create_WithMissingFullName_Throws(string? fullName)
     {
-        Assert.ThrowsAny<ArgumentException>(() => Founder.Create("123456789047", fullName!, Start));
+        var exception = Assert.Throws<DomainValidationException>(() => Founder.Create("123456789047", fullName!, Start));
+        Assert.Equal(nameof(Founder.FullName), exception.FieldName);
     }
 
     [Fact]
@@ -47,7 +50,7 @@ public class FounderTests
     {
         var fullName = new string('А', Founder.MaxFullNameLength);
         Assert.Equal(fullName, Founder.Create("123456789047", fullName, Start).FullName);
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<DomainValidationException>(() =>
             Founder.Create("123456789047", fullName + "А", Start));
     }
 
@@ -70,7 +73,7 @@ public class FounderTests
     public void Update_WithInvalidInput_DoesNotPartiallyChangeFounder()
     {
         var founder = Founder.Create("123456789047", "Иванов Иван", Start);
-        Assert.Throws<ArgumentException>(() => founder.Update(
+        Assert.Throws<DomainValidationException>(() => founder.Update(
             "100010000002", new string('А', Founder.MaxFullNameLength + 1), Start.AddHours(1)));
 
         Assert.Equal("123456789047", founder.Inn);

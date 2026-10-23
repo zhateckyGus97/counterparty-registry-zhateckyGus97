@@ -14,8 +14,9 @@ public class ClientBehaviorTests
     [InlineData(3)]
     public void Create_WithUnknownType_Throws(int type)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
+        var exception = Assert.Throws<DomainValidationException>(() =>
             Client.Create("7701234560", "Клиент", (ClientType)type, Start));
+        Assert.Equal(nameof(Client.Type), exception.FieldName);
     }
 
     [Theory]
@@ -24,8 +25,9 @@ public class ClientBehaviorTests
     [InlineData("   ")]
     public void Create_WithMissingName_Throws(string? name)
     {
-        Assert.ThrowsAny<ArgumentException>(() =>
+        var exception = Assert.Throws<DomainValidationException>(() =>
             Client.Create("7701234560", name!, ClientType.LegalEntity, Start));
+        Assert.Equal(nameof(Client.Name), exception.FieldName);
     }
 
     [Fact]
@@ -46,7 +48,7 @@ public class ClientBehaviorTests
     {
         var name = new string('А', Client.MaxNameLength);
         Assert.Equal(name, Client.Create("7701234560", name, ClientType.LegalEntity, Start).Name);
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<DomainValidationException>(() =>
             Client.Create("7701234560", name + "А", ClientType.LegalEntity, Start));
     }
 
@@ -71,7 +73,7 @@ public class ClientBehaviorTests
     {
         var client = CreateClient();
 
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<DomainValidationException>(() =>
             client.Update("7701234561", "Новое имя", ClientType.LegalEntity, Start.AddHours(1)));
 
         Assert.Equal("7701234560", client.Inn);
