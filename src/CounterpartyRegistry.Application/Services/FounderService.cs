@@ -56,10 +56,10 @@ public sealed class FounderService : IFounderService
     {
         ArgumentNullException.ThrowIfNull(request);
         var founder = await RequireFounderAsync(id, cancellationToken);
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.Inn);
-        var inn = request.Inn.Trim();
+        var inn = request.Inn?.Trim() ?? string.Empty;
 
-        await EnsureInnAvailableAsync(inn, id, cancellationToken);
+        if (inn.Length > 0)
+            await EnsureInnAvailableAsync(inn, id, cancellationToken);
         founder.Update(inn, request.FullName, _timeProvider.GetUtcNow());
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

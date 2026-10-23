@@ -67,11 +67,11 @@ public sealed class ClientService : IClientService
     {
         ArgumentNullException.ThrowIfNull(request);
         var client = await RequireClientAsync(id, cancellationToken);
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.Inn);
-        var inn = request.Inn.Trim();
+        var inn = request.Inn?.Trim() ?? string.Empty;
 
         // Check before mutating the tracked entity, so a conflict leaves it unchanged.
-        await EnsureInnAvailableAsync(inn, id, cancellationToken);
+        if (inn.Length > 0)
+            await EnsureInnAvailableAsync(inn, id, cancellationToken);
         client.Update(inn, request.Name, request.Type, _timeProvider.GetUtcNow());
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

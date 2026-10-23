@@ -13,7 +13,6 @@ public class ClientFounder
     {
     }
 
-    // Links are created through Client.AddFounder, which enforces client rules.
     internal ClientFounder(Guid clientId, Founder founder, DateTimeOffset now)
     {
         ClientId = clientId;

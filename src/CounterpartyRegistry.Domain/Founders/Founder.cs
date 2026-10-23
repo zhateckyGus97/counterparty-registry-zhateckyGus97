@@ -1,3 +1,4 @@
+using CounterpartyRegistry.Domain.Exceptions;
 using CounterpartyRegistry.Domain.Validation;
 
 namespace CounterpartyRegistry.Domain.Founders;
@@ -47,22 +48,23 @@ public class Founder
 
     private static (string Inn, string FullName) ValidateAndNormalize(string inn, string fullName)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(inn);
-        ArgumentException.ThrowIfNullOrWhiteSpace(fullName);
+        if (string.IsNullOrWhiteSpace(inn))
+            throw new DomainValidationException(nameof(Inn), "Укажите ИНН.");
+        if (string.IsNullOrWhiteSpace(fullName))
+            throw new DomainValidationException(nameof(FullName), "Укажите ФИО учредителя.");
         inn = inn.Trim();
         fullName = fullName.Trim();
 
         if (inn.Length != 12 || !InnValidator.IsValid(inn))
         {
-            throw new ArgumentException(
-                "ИНН учредителя должен содержать 12 цифр с верными контрольными цифрами.",
-                nameof(inn));
+            throw new DomainValidationException(nameof(Inn),
+                "ИНН учредителя должен содержать 12 цифр с верными контрольными цифрами.");
         }
 
         if (fullName.Length > MaxFullNameLength)
         {
-            throw new ArgumentException(
-                $"ФИО не должно превышать {MaxFullNameLength} символов.", nameof(fullName));
+            throw new DomainValidationException(nameof(FullName),
+                $"ФИО не должно превышать {MaxFullNameLength} символов.");
         }
 
         return (inn, fullName);

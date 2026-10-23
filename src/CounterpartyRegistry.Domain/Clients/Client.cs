@@ -106,27 +106,29 @@ public class Client
     {
         if (type != ClientType.LegalEntity && type != ClientType.IndividualEntrepreneur)
         {
-            throw new ArgumentOutOfRangeException(nameof(type), type, "Неизвестный тип клиента.");
+            throw new DomainValidationException(nameof(Type), "Неизвестный тип клиента.");
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(inn);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        if (string.IsNullOrWhiteSpace(inn))
+            throw new DomainValidationException(nameof(Inn), "Укажите ИНН.");
+        if (string.IsNullOrWhiteSpace(name))
+            throw new DomainValidationException(nameof(Name), "Укажите наименование клиента.");
         inn = inn.Trim();
         name = name.Trim();
 
         if (name.Length > MaxNameLength)
         {
-            throw new ArgumentException(
-                $"Наименование не должно превышать {MaxNameLength} символов.", nameof(name));
+            throw new DomainValidationException(nameof(Name),
+                $"Наименование не должно превышать {MaxNameLength} символов.");
         }
 
         var expectedInnLength = type == ClientType.LegalEntity ? 10 : 12;
 
         if (inn.Length != expectedInnLength || !InnValidator.IsValid(inn))
         {
-            throw new ArgumentException(
+            throw new DomainValidationException(nameof(Inn),
                 $"Некорректный ИНН. Для этого типа клиента требуется " +
-                $"{expectedInnLength} цифр с верными контрольными цифрами.", nameof(inn));
+                $"{expectedInnLength} цифр с верными контрольными цифрами.");
         }
 
         return (inn, name);
